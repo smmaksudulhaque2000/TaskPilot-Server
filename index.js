@@ -5,6 +5,7 @@ const cors = require("cors");
 require("dotenv").config();
 // const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const port = process.env.PORT || 5000;
+const { ObjectId } = require("mongodb");
 
 // middleware
 app.use(cors());
@@ -68,24 +69,33 @@ async function run() {
       });
 
     //Task get
-    app.get("/alltask", async (req, res) => {
+    app.get("/tasks", async (req, res) => {
         const task = req.body;
         const result = await taskCollection.find(task).toArray();
         res.send(result);
       });
 
     //Task post
-    app.post("/alltask", async (req, res) => {
+    app.post("/tasks", async (req, res) => {
       const task = req.body;
       const result = await taskCollection.insertOne(task);
       res.send(result);
     });
 
-
-
-
-
-
+    //Task patch
+    app.patch("/tasks/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const { status } = req.body;
+      
+      const updatedDoc = {
+        $set: {
+           status: status 
+        },
+      };
+      const result = await taskCollection.updateOne(filter, updatedDoc);
+      res.send(result);
+    });
 
 
 
