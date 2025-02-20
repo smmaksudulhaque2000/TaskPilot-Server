@@ -11,8 +11,7 @@ const { ObjectId } = require("mongodb");
 app.use(cors());
 app.use(express.json());
 
-
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.bjzga.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -21,7 +20,7 @@ const client = new MongoClient(uri, {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  }
+  },
 });
 
 async function run() {
@@ -34,63 +33,63 @@ async function run() {
 
     // JWT Related API
     app.post("/jwt", async (req, res) => {
-        const user = req.body;
-        const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
-          expiresIn: "12h",
-        });
-        res.send({ token });
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "12h",
       });
-  
-      // middleware
-      const varifyToken = (req, res, next) => {
-        if (!req.headers.authorization) {
+      res.send({ token });
+    });
+
+    // middleware
+    const varifyToken = (req, res, next) => {
+      if (!req.headers.authorization) {
+        return res.status(401).send({ message: "Unauthorized access" });
+      }
+      const token = req.headers.authorization.split(" ")[1];
+      jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if (err) {
           return res.status(401).send({ message: "Unauthorized access" });
         }
-        const token = req.headers.authorization.split(" ")[1];
-        jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
-          if (err) {
-            return res.status(401).send({ message: "Unauthorized access" });
-          }
-          req.decoded = decoded;
-          next();
-        });
-      };
+        req.decoded = decoded;
+        next();
+      });
+    };
 
     //User post
     app.post("/users", async (req, res) => {
-        const user = req.body;
-        const query = { email: user.email };
-        const existingUser = await usersCollection.findOne(query);
-        if (existingUser) {
-          return res.send({ message: "user Already exists", insertedId: null });
-        }
-        const result = await usersCollection.insertOne(user);
-        res.send(result);
-      });
+      const user = req.body;
+      const query = { email: user.email };
+      const existingUser = await usersCollection.findOne(query);
+      if (existingUser) {
+        return res.send({ message: "user Already exists", insertedId: null });
+      }
+      const result = await usersCollection.insertOne(user);
+      res.send(result);
+    });
 
     //Task get
-    app.get("/tasks", async (req, res) => {
-        const task = req.body;
-        const result = await taskCollection.find(task).toArray();
-        res.send(result);
-      });
+    app.get("/tasks", varifyToken, async (req, res) => {
+      const task = req.body;
+      const result = await taskCollection.find(task).toArray();
+      res.send(result);
+    });
 
     //Task post
-    app.post("/tasks", async (req, res) => {
+    app.post("/tasks", varifyToken, async (req, res) => {
       const task = req.body;
       const result = await taskCollection.insertOne(task);
       res.send(result);
     });
 
     //Task patch
-    app.patch("/tasks/:id", async (req, res) => {
+    app.patch("/tasks/:id", varifyToken, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const { status } = req.body;
-      
+
       const updatedDoc = {
         $set: {
-           status: status 
+          status: status,
         },
       };
       const result = await taskCollection.updateOne(filter, updatedDoc);
@@ -98,7 +97,7 @@ async function run() {
     });
 
     // Task Delete
-    app.delete("/task/:id", async (req, res) => {
+    app.delete("/task/:id", varifyToken, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await taskCollection.deleteOne(query);
@@ -106,7 +105,7 @@ async function run() {
     });
 
     // Task Update
-    app.patch("/task/:id", async (req, res) => {
+    app.patch("/task/:id", varifyToken, async (req, res) => {
       const id = req.params.id;
       const updatedTask = req.body;
       const filter = { _id: new ObjectId(id) };
@@ -122,16 +121,6 @@ async function run() {
       }
     });
 
-
-
-
-
-
-
-
-
-
-
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
     // console.log("Pinged your deployment. You successfully connected to MongoDB!");
@@ -142,12 +131,11 @@ async function run() {
 }
 run().catch(console.dir);
 
-
 // routes
 app.get("/", (req, res) => {
-    res.send("TaskPilot-Server is Running....");
-  });
-  
-  app.listen(port, () => {
-    console.log(`TaskPilot-Server is running on port ${port}`);
-  });
+  res.send("TaskPilot-Server is Running....");
+});
+
+app.listen(port, () => {
+  console.log(`TaskPilot-Server is running on port ${port}`);
+});
