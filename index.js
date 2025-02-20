@@ -67,12 +67,19 @@ async function run() {
         res.send(result);
       });
 
-    //User get
-    app.get("/task", async (req, res) => {
+    //Task get
+    app.get("/alltask", async (req, res) => {
         const task = req.body;
         const result = await taskCollection.find(task).toArray();
         res.send(result);
       });
+
+    //Task post
+    app.post("/alltask", async (req, res) => {
+      const task = req.body;
+      const result = await taskCollection.insertOne(task);
+      res.send(result);
+    });
 
 
 
