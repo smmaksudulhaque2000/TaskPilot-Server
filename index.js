@@ -1,5 +1,5 @@
 const express = require("express");
-// var jwt = require("jsonwebtoken");
+var jwt = require("jsonwebtoken");
 const app = express();
 const cors = require("cors");
 require("dotenv").config();
@@ -28,7 +28,44 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
 
+    const usersCollection = client.db("TaskPilotDB").collection("users");
     const taskCollection = client.db("TaskPilotDB").collection("task");
+
+    // JWT Related API
+    app.post("/jwt", async (req, res) => {
+        const user = req.body;
+        const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+          expiresIn: "12h",
+        });
+        res.send({ token });
+      });
+  
+      // middleware
+      const varifyToken = (req, res, next) => {
+        if (!req.headers.authorization) {
+          return res.status(401).send({ message: "Unauthorized access" });
+        }
+        const token = req.headers.authorization.split(" ")[1];
+        jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+          if (err) {
+            return res.status(401).send({ message: "Unauthorized access" });
+          }
+          req.decoded = decoded;
+          next();
+        });
+      };
+
+    //User post
+    app.post("/users", async (req, res) => {
+        const user = req.body;
+        const query = { email: user.email };
+        const existingUser = await usersCollection.findOne(query);
+        if (existingUser) {
+          return res.send({ message: "user Already exists", insertedId: null });
+        }
+        const result = await usersCollection.insertOne(user);
+        res.send(result);
+      });
 
     //User get
     app.get("/task", async (req, res) => {
