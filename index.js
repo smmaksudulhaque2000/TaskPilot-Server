@@ -105,6 +105,23 @@ async function run() {
       res.send(result);
     });
 
+    // Task Update
+    app.patch("/task/:id", async (req, res) => {
+      const id = req.params.id;
+      const updatedTask = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: updatedTask,
+      };
+      try {
+        const result = await taskCollection.updateOne(filter, updatedDoc);
+        res.send(result);
+      } catch (error) {
+        console.error("Error updating class:", error);
+        res.status(500).send({ message: "Failed to update class." });
+      }
+    });
+
 
 
 
