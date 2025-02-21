@@ -8,15 +8,17 @@ const port = process.env.PORT || 5000;
 const { ObjectId } = require("mongodb");
 
 // middleware
-app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "https://taskpilot-e895c.web.app",
-    "https://taskpilot-e895c.firebaseapp.com",
-    "https://task-pilot-server-taupe.vercel.app",
-  ],
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://taskpilot-e895c.web.app",
+      "https://taskpilot-e895c.firebaseapp.com",
+      "https://task-pilot-server-taupe.vercel.app",
+    ],
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 const { MongoClient, ServerApiVersion } = require("mongodb");
@@ -75,16 +77,18 @@ async function run() {
       res.send(result);
     });
 
-   // Task get with sorting (latest first)
-app.get("/tasks", varifyToken, async (req, res) => {
-  try {
-    const result = await taskCollection.find().sort({ _id: -1 }).toArray();
-    res.send(result);
-  } catch (error) {
-    console.error("Error fetching tasks:", error);
-    res.status(500).send({ message: "Failed to fetch tasks" });
-  }
-});
+    // Task get with sorting (latest first)
+    app.get("/tasks", varifyToken, async (req, res) => {
+      try {
+        const email = req.query.email;
+      const query = { email: email };
+        const result = await taskCollection.find(query).sort({ _id: -1 }).toArray();
+        res.send(result);
+      } catch (error) {
+        console.error("Error fetching tasks:", error);
+        res.status(500).send({ message: "Failed to fetch tasks" });
+      }
+    });
 
     //Task post
     app.post("/tasks", varifyToken, async (req, res) => {
