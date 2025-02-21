@@ -67,12 +67,16 @@ async function run() {
       res.send(result);
     });
 
-    //Task get
-    app.get("/tasks", varifyToken, async (req, res) => {
-      const task = req.body;
-      const result = await taskCollection.find(task).toArray();
-      res.send(result);
-    });
+   // Task get with sorting (latest first)
+app.get("/tasks", varifyToken, async (req, res) => {
+  try {
+    const result = await taskCollection.find().sort({ _id: -1 }).toArray();
+    res.send(result);
+  } catch (error) {
+    console.error("Error fetching tasks:", error);
+    res.status(500).send({ message: "Failed to fetch tasks" });
+  }
+});
 
     //Task post
     app.post("/tasks", varifyToken, async (req, res) => {
